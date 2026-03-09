@@ -88,9 +88,9 @@ class GOATHandler(SimpleHTTPRequestHandler):
 
 
 def main():
-    port = int(sys.argv[1]) if len(sys.argv) > 1 else 8888
-    server = HTTPServer(("127.0.0.1", port), GOATHandler)
-    print(f"\n  GOAT UI running at http://localhost:{port}\n")
+    port = int(os.environ.get("PORT", sys.argv[1] if len(sys.argv) > 1 else 8888))
+    server = HTTPServer(("0.0.0.0", port), GOATHandler)
+    print(f"\n  GOAT UI running on port {port}\n")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
