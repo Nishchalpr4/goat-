@@ -1,0 +1,195 @@
+{
+  "version": "1.0",
+  "description": "Core US GAAP metric mappings from XBRL taxonomy to common financial terms",
+  "metrics": [
+    {
+      "xbrl_element": "us-gaap:Revenues",
+      "canonical": "revenue",
+      "surface_forms": ["revenue", "revenues", "total revenue", "net revenue", "net revenues", "sales", "net sales", "total sales"],
+      "category": "income_statement",
+      "unit": "USD"
+    },
+    {
+      "xbrl_element": "us-gaap:CostOfGoodsAndServicesSold",
+      "canonical": "cost_of_revenue",
+      "surface_forms": ["cost of revenue", "cost of goods sold", "COGS", "cost of sales", "cost of products sold"],
+      "category": "income_statement",
+      "unit": "USD"
+    },
+    {
+      "xbrl_element": "us-gaap:GrossProfit",
+      "canonical": "gross_profit",
+      "surface_forms": ["gross profit", "gross income", "gross margin dollars"],
+      "category": "income_statement",
+      "unit": "USD"
+    },
+    {
+      "xbrl_element": "us-gaap:OperatingIncomeLoss",
+      "canonical": "operating_income",
+      "surface_forms": ["operating income", "operating profit", "operating earnings", "income from operations", "EBIT"],
+      "category": "income_statement",
+      "unit": "USD"
+    },
+    {
+      "xbrl_element": "us-gaap:NetIncomeLoss",
+      "canonical": "net_income",
+      "surface_forms": ["net income", "net profit", "net earnings", "bottom line", "net income attributable to common stockholders"],
+      "category": "income_statement",
+      "unit": "USD"
+    },
+    {
+      "xbrl_element": "us-gaap:EarningsPerShareDiluted",
+      "canonical": "eps_diluted",
+      "surface_forms": ["EPS", "earnings per share", "diluted EPS", "diluted earnings per share"],
+      "category": "income_statement",
+      "unit": "USD/share"
+    },
+    {
+      "xbrl_element": "us-gaap:EarningsPerShareBasic",
+      "canonical": "eps_basic",
+      "surface_forms": ["basic EPS", "basic earnings per share"],
+      "category": "income_statement",
+      "unit": "USD/share"
+    },
+    {
+      "xbrl_element": "us-gaap:Assets",
+      "canonical": "total_assets",
+      "surface_forms": ["total assets", "assets"],
+      "category": "balance_sheet",
+      "unit": "USD"
+    },
+    {
+      "xbrl_element": "us-gaap:Liabilities",
+      "canonical": "total_liabilities",
+      "surface_forms": ["total liabilities", "liabilities"],
+      "category": "balance_sheet",
+      "unit": "USD"
+    },
+    {
+      "xbrl_element": "us-gaap:StockholdersEquity",
+      "canonical": "total_equity",
+      "surface_forms": ["total equity", "stockholders equity", "shareholders equity", "book value", "net worth"],
+      "category": "balance_sheet",
+      "unit": "USD"
+    },
+    {
+      "xbrl_element": "us-gaap:AssetsCurrent",
+      "canonical": "current_assets",
+      "surface_forms": ["current assets", "total current assets"],
+      "category": "balance_sheet",
+      "unit": "USD"
+    },
+    {
+      "xbrl_element": "us-gaap:LiabilitiesCurrent",
+      "canonical": "current_liabilities",
+      "surface_forms": ["current liabilities", "total current liabilities"],
+      "category": "balance_sheet",
+      "unit": "USD"
+    },
+    {
+      "xbrl_element": "us-gaap:LongTermDebt",
+      "canonical": "long_term_debt",
+      "surface_forms": ["long-term debt", "LT debt", "long term debt", "non-current debt"],
+      "category": "balance_sheet",
+      "unit": "USD"
+    },
+    {
+      "xbrl_element": "us-gaap:CashAndCashEquivalentsAtCarryingValue",
+      "canonical": "cash_and_equivalents",
+      "surface_forms": ["cash", "cash and equivalents", "cash and cash equivalents", "cash on hand"],
+      "category": "balance_sheet",
+      "unit": "USD"
+    },
+    {
+      "xbrl_element": "us-gaap:NetCashProvidedByUsedInOperatingActivities",
+      "canonical": "operating_cash_flow",
+      "surface_forms": ["operating cash flow", "cash from operations", "OCF", "CFO", "cash flow from operating activities"],
+      "category": "cash_flow",
+      "unit": "USD"
+    },
+    {
+      "xbrl_element": "us-gaap:NetCashProvidedByUsedInInvestingActivities",
+      "canonical": "investing_cash_flow",
+      "surface_forms": ["investing cash flow", "cash from investing", "cash flow from investing activities"],
+      "category": "cash_flow",
+      "unit": "USD"
+    },
+    {
+      "xbrl_element": "us-gaap:NetCashProvidedByUsedInFinancingActivities",
+      "canonical": "financing_cash_flow",
+      "surface_forms": ["financing cash flow", "cash from financing", "cash flow from financing activities"],
+      "category": "cash_flow",
+      "unit": "USD"
+    },
+    {
+      "xbrl_element": "us-gaap:PaymentsToAcquirePropertyPlantAndEquipment",
+      "canonical": "capital_expenditures",
+      "surface_forms": ["capex", "capital expenditures", "capital spending", "cap ex", "purchases of property and equipment"],
+      "category": "cash_flow",
+      "unit": "USD"
+    },
+    {
+      "xbrl_element": "derived:FreeCashFlow",
+      "canonical": "free_cash_flow",
+      "surface_forms": ["free cash flow", "FCF", "levered free cash flow"],
+      "category": "cash_flow",
+      "unit": "USD"
+    },
+    {
+      "xbrl_element": "derived:EBITDA",
+      "canonical": "ebitda",
+      "surface_forms": ["EBITDA", "earnings before interest taxes depreciation and amortization"],
+      "category": "income_statement",
+      "unit": "USD"
+    },
+    {
+      "xbrl_element": "derived:GrossMargin",
+      "canonical": "gross_margin",
+      "surface_forms": ["gross margin", "gross profit margin", "GM"],
+      "category": "ratio",
+      "unit": "percent"
+    },
+    {
+      "xbrl_element": "derived:OperatingMargin",
+      "canonical": "operating_margin",
+      "surface_forms": ["operating margin", "op margin", "EBIT margin"],
+      "category": "ratio",
+      "unit": "percent"
+    },
+    {
+      "xbrl_element": "derived:NetMargin",
+      "canonical": "net_margin",
+      "surface_forms": ["net margin", "profit margin", "net profit margin", "net income margin"],
+      "category": "ratio",
+      "unit": "percent"
+    },
+    {
+      "xbrl_element": "derived:ReturnOnEquity",
+      "canonical": "roe",
+      "surface_forms": ["ROE", "return on equity"],
+      "category": "ratio",
+      "unit": "percent"
+    },
+    {
+      "xbrl_element": "derived:ReturnOnAssets",
+      "canonical": "roa",
+      "surface_forms": ["ROA", "return on assets"],
+      "category": "ratio",
+      "unit": "percent"
+    },
+    {
+      "xbrl_element": "derived:DebtToEquity",
+      "canonical": "debt_to_equity",
+      "surface_forms": ["debt to equity", "D/E", "D/E ratio", "leverage ratio"],
+      "category": "ratio",
+      "unit": "ratio"
+    },
+    {
+      "xbrl_element": "derived:CurrentRatio",
+      "canonical": "current_ratio",
+      "surface_forms": ["current ratio"],
+      "category": "ratio",
+      "unit": "ratio"
+    }
+  ]
+}

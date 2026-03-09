@@ -1,0 +1,27 @@
+# GOAT — Growth-Oriented Analysis Toolkit
+# Core dependencies
+pydantic>=2.0
+
+# Storage
+psycopg2-binary>=2.9
+duckdb>=0.9
+
+# Vector DB
+qdrant-client>=1.7
+
+# Graph
+networkx>=3.1
+
+# Embeddings
+openai>=1.10
+cohere>=4.0
+voyageai>=0.2
+sentence-transformers>=2.3
+tiktoken>=0.5
+
+# NLP
+nltk>=3.8
+
+# Utilities
+numpy>=1.24
+tqdm>=4.65

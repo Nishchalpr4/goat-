@@ -1,0 +1,62 @@
+[
+  {
+    "canonical_id": "AAPL",
+    "name": "Apple Inc.",
+    "ticker": "AAPL",
+    "exchange": "NASDAQ",
+    "sector": "Technology",
+    "industry": "Consumer Electronics",
+    "cik": "0000320193",
+    "country": "US",
+    "aliases": ["Apple", "apple inc", "apple computer"],
+    "description": "Apple Inc. designs, manufactures, and markets smartphones, personal computers, tablets, wearables, and accessories worldwide."
+  },
+  {
+    "canonical_id": "MSFT",
+    "name": "Microsoft Corporation",
+    "ticker": "MSFT",
+    "exchange": "NASDAQ",
+    "sector": "Technology",
+    "industry": "Software - Infrastructure",
+    "cik": "0000789019",
+    "country": "US",
+    "aliases": ["Microsoft", "microsoft corp"],
+    "description": "Microsoft Corporation develops and supports software, services, devices, and solutions worldwide."
+  },
+  {
+    "canonical_id": "GOOGL",
+    "name": "Alphabet Inc.",
+    "ticker": "GOOGL",
+    "exchange": "NASDAQ",
+    "sector": "Technology",
+    "industry": "Internet Content & Information",
+    "cik": "0001652044",
+    "country": "US",
+    "aliases": ["Google", "Alphabet", "alphabet inc"],
+    "description": "Alphabet Inc. offers various products and platforms in the United States, Europe, the Middle East, Africa, the Asia-Pacific, Canada, and Latin America."
+  },
+  {
+    "canonical_id": "AMZN",
+    "name": "Amazon.com Inc.",
+    "ticker": "AMZN",
+    "exchange": "NASDAQ",
+    "sector": "Consumer Cyclical",
+    "industry": "Internet Retail",
+    "cik": "0001018724",
+    "country": "US",
+    "aliases": ["Amazon", "amazon.com"],
+    "description": "Amazon.com, Inc. engages in the retail sale of consumer products, advertising, and subscription services through online and physical stores."
+  },
+  {
+    "canonical_id": "NVDA",
+    "name": "NVIDIA Corporation",
+    "ticker": "NVDA",
+    "exchange": "NASDAQ",
+    "sector": "Technology",
+    "industry": "Semiconductors",
+    "cik": "0001045810",
+    "country": "US",
+    "aliases": ["NVIDIA", "Nvidia", "nvidia corp"],
+    "description": "NVIDIA Corporation provides graphics and compute and networking solutions."
+  }
+]

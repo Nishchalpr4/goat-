@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GOAT — Growth-Oriented Analysis Toolkit</title>
+<style>
+/* ── Reset & Base ── */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a26;--border:#252536;
+  --text:#e0e0ee;--text2:#8888aa;--accent:#6c5ce7;--accent2:#a29bfe;
+  --green:#00b894;--orange:#fdcb6e;--red:#e17055;--blue:#74b9ff;
+  --cyan:#81ecec;--pink:#fd79a8;
+  --font:'SF Mono','Cascadia Code','JetBrains Mono','Fira Code',monospace;
+  --sans:-apple-system,'Segoe UI',Roboto,sans-serif;
+}
+html{font-size:14px}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden}
+::selection{background:var(--accent);color:#fff}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* ── Layout ── */
+.shell{max-width:1200px;margin:0 auto;padding:2rem 1.5rem}
+header{text-align:center;margin-bottom:2rem}
+header h1{font-family:var(--font);font-size:2.4rem;font-weight:800;letter-spacing:-.03em;
+  background:linear-gradient(135deg,var(--accent2),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+header p{color:var(--text2);margin-top:.3rem;font-size:.95rem}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:2px;background:var(--surface);border-radius:10px;padding:3px;margin-bottom:1.5rem;border:1px solid var(--border)}
+.tab{flex:1;padding:.7rem 1rem;text-align:center;border-radius:8px;cursor:pointer;
+  font-weight:600;font-size:.85rem;color:var(--text2);transition:all .2s;user-select:none}
+.tab:hover{color:var(--text);background:var(--surface2)}
+.tab.active{background:var(--accent);color:#fff}
+.panel{display:none}
+.panel.active{display:block}
+
+/* ── Query Tab ── */
+.query-box{display:flex;gap:.5rem;margin-bottom:1.5rem}
+.query-box input{flex:1;padding:.8rem 1rem;border-radius:8px;border:1px solid var(--border);
+  background:var(--surface);color:var(--text);font-size:1rem;font-family:var(--font);outline:none;transition:border .2s}
+.query-box input:focus{border-color:var(--accent)}
+.query-box button{padding:.8rem 1.6rem;border-radius:8px;border:none;background:var(--accent);
+  color:#fff;font-weight:700;cursor:pointer;font-size:.9rem;transition:transform .1s}
+.query-box button:active{transform:scale(.97)}
+.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.result-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.2rem}
+.result-card h3{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);margin-bottom:.8rem}
+.badge{display:inline-block;padding:.25rem .7rem;border-radius:20px;font-size:.8rem;font-weight:700;font-family:var(--font)}
+.badge.tier-a{background:#00b89422;color:var(--green);border:1px solid #00b89444}
+.badge.tier-b{background:#fdcb6e22;color:var(--orange);border:1px solid #fdcb6e44}
+.badge.tier-c{background:#e1705522;color:var(--red);border:1px solid #e1705544}
+.badge.intent{background:var(--accent)22;color:var(--accent2);border:1px solid var(--accent)44}
+.token-list{display:flex;flex-wrap:wrap;gap:4px;margin-top:.5rem}
+.token{padding:2px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;font-family:var(--font);font-size:.8rem}
+.token.entity{border-color:var(--cyan);color:var(--cyan)}
+.token.period{border-color:var(--orange);color:var(--orange)}
+.token.metric{border-color:var(--pink);color:var(--pink)}
+.kv{display:flex;justify-content:space-between;padding:.4rem 0;border-bottom:1px solid var(--border)}
+.kv:last-child{border:none}
+.kv .k{color:var(--text2);font-size:.85rem}
+.kv .v{font-family:var(--font);font-weight:600}
+
+/* ── Pipeline Stage Indicator ── */
+.stage-pipeline{display:flex;align-items:center;gap:0;margin:1.5rem 0;overflow-x:auto;padding:.5rem 0}
+.stage-node{display:flex;flex-direction:column;align-items:center;min-width:80px}
+.stage-dot{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:.7rem;font-weight:800;border:2px solid var(--border);background:var(--surface);color:var(--text2);transition:all .3s}
+.stage-dot.hit{background:var(--green);border-color:var(--green);color:#fff}
+.stage-dot.skip{opacity:.3}
+.stage-label{font-size:.65rem;color:var(--text2);margin-top:.3rem;text-transform:uppercase;letter-spacing:.05em}
+.stage-arrow{width:24px;height:2px;background:var(--border);margin-bottom:1rem}
+.stage-arrow.hit{background:var(--green)}
+
+/* ── How It Works ── */
+.section-title{font-size:1.1rem;font-weight:700;margin:2rem 0 1rem;padding-left:.8rem;
+  border-left:3px solid var(--accent)}
+.stage-explainer{background:var(--surface);border:1px solid var(--border);border-radius:10px;
+  margin-bottom:1rem;overflow:hidden}
+.stage-header{display:flex;align-items:center;gap:.8rem;padding:1rem 1.2rem;cursor:pointer;user-select:none}
+.stage-header:hover{background:var(--surface2)}
+.stage-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:.75rem;font-weight:800;font-family:var(--font);flex-shrink:0}
+.stage-header h4{font-size:.9rem;flex:1}
+.stage-header .arrow{color:var(--text2);transition:transform .2s;font-size:.8rem}
+.stage-header .arrow.open{transform:rotate(90deg)}
+.stage-body{padding:0 1.2rem 1.2rem;display:none;font-size:.88rem;line-height:1.6;color:var(--text2)}
+.stage-body.open{display:block}
+.stage-body code{font-family:var(--font);background:var(--surface2);padding:1px 6px;border-radius:3px;font-size:.82rem;color:var(--accent2)}
+.stage-body ul{margin:.5rem 0 .5rem 1.2rem}
+.stage-body li{margin:.3rem 0}
+.mini-flow{display:flex;align-items:center;gap:6px;margin:.8rem 0;flex-wrap:wrap}
+.mini-flow span{padding:4px 10px;border-radius:4px;font-family:var(--font);font-size:.75rem;font-weight:600}
+.mini-flow .f-in{background:#74b9ff22;color:var(--blue);border:1px solid #74b9ff33}
+.mini-flow .f-proc{background:#6c5ce722;color:var(--accent2);border:1px solid #6c5ce733}
+.mini-flow .f-out{background:#00b89422;color:var(--green);border:1px solid #00b89433}
+.mini-flow .f-arrow{color:var(--text2);font-size:.7rem}
+
+/* ── Graph Tab ── */
+.graph-container{position:relative;background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;overflow:hidden}
+.graph-canvas{width:100%;height:560px;display:block}
+.graph-legend{position:absolute;top:12px;right:12px;background:var(--bg)dd;backdrop-filter:blur(8px);
+  border:1px solid var(--border);border-radius:8px;padding:.8rem 1rem}
+.legend-item{display:flex;align-items:center;gap:6px;margin:.3rem 0;font-size:.75rem;color:var(--text2)}
+.legend-dot{width:10px;height:10px;border-radius:50%}
+.graph-controls{display:flex;gap:.5rem;margin-bottom:1rem;flex-wrap:wrap}
+.graph-btn{padding:.4rem .8rem;border-radius:6px;border:1px solid var(--border);background:var(--surface);
+  color:var(--text2);font-size:.78rem;cursor:pointer;font-weight:600;transition:all .2s}
+.graph-btn:hover,.graph-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* ── Architecture Tab ── */
+.arch-diagram{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:2rem;margin-bottom:1.5rem}
+.arch-row{display:flex;gap:1rem;margin-bottom:1rem;justify-content:center;flex-wrap:wrap}
+.arch-box{padding:.7rem 1.2rem;border-radius:8px;font-size:.8rem;font-weight:700;text-align:center;
+  min-width:120px;font-family:var(--font);border:1px solid;position:relative}
+.arch-box.query{background:#6c5ce718;border-color:#6c5ce744;color:var(--accent2)}
+.arch-box.lexical{background:#81ecec18;border-color:#81ecec44;color:var(--cyan)}
+.arch-box.retrieval{background:#74b9ff18;border-color:#74b9ff44;color:var(--blue)}
+.arch-box.storage{background:#00b89418;border-color:#00b89444;color:var(--green)}
+.arch-box.ingest{background:#fdcb6e18;border-color:#fdcb6e44;color:var(--orange)}
+.arch-box.graph{background:#fd79a818;border-color:#fd79a844;color:var(--pink)}
+.arch-box.embed{background:#e1705518;border-color:#e1705544;color:var(--red)}
+.arch-connector{text-align:center;color:var(--text2);font-size:.8rem;margin:.3rem 0}
+.module-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1rem}
+.module-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.2rem}
+.module-card h4{font-size:.85rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.5rem}
+.module-card .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.module-card p{font-size:.82rem;color:var(--text2);line-height:1.5}
+.module-card .files{margin-top:.5rem;font-family:var(--font);font-size:.75rem;color:var(--text2)}
+
+/* ── Samples ── */
+.samples{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
+.sample{padding:.35rem .7rem;border-radius:6px;border:1px solid var(--border);background:var(--surface);
+  color:var(--text2);font-size:.78rem;cursor:pointer;font-family:var(--font);transition:all .2s}
+.sample:hover{border-color:var(--accent);color:var(--accent2)}
+
+/* ── Responsive ── */
+@media(max-width:700px){
+  .result-grid{grid-template-columns:1fr}
+  .module-grid{grid-template-columns:1fr}
+  header h1{font-size:1.6rem}
+  .stage-pipeline{justify-content:flex-start}
+}
+
+.empty-state{text-align:center;padding:3rem;color:var(--text2)}
+.empty-state .big{font-size:2rem;margin-bottom:.5rem}
+</style>
+</head>
+<body>
+<div class="shell">
+
+  <header>
+    <h1>⬡ GOAT</h1>
+    <p>Growth-Oriented Analysis Toolkit — Lexical Semantics for Investment Analysis</p>
+  </header>
+
+  <!-- ── Tabs ── -->
+  <div class="tabs">
+    <div class="tab active" data-tab="query">Query</div>
+    <div class="tab" data-tab="how">How It Works</div>
+    <div class="tab" data-tab="graph">Graph Zones</div>
+    <div class="tab" data-tab="arch">Architecture</div>
+  </div>
+
+  <!-- ═══════════════════ QUERY TAB ═══════════════════ -->
+  <div id="query" class="panel active">
+    <div class="samples" id="samples"></div>
+    <div class="query-box">
+      <input type="text" id="qInput" placeholder="Ask something… e.g. Compare AAPL vs MSFT gross margins Q3 2025" autocomplete="off">
+      <button id="qBtn">Analyze</button>
+    </div>
+    <div id="stagePipeline" class="stage-pipeline" style="display:none"></div>
+    <div id="results" class="result-grid" style="display:none"></div>
+    <div id="emptyQuery" class="empty-state">
+      <div class="big">⬡</div>
+      <p>Enter an investment analysis query above</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ HOW IT WORKS TAB ═══════════════════ -->
+  <div id="how" class="panel">
+
+    <!-- ── QUERY PIPELINE ── -->
+    <div class="section-title">Query Pipeline — 8 Stages</div>
+    <p style="color:var(--text2);font-size:.88rem;margin-bottom:1rem">Every query flows through an 8-stage pipeline. Each stage transforms the raw text into a structured, scored, explainable result. Click any stage to see internals.</p>
+
+    <div class="stage-explainer" id="s-parse">
+      <div class="stage-header" onclick="toggleStage('s-parse')">
+        <div class="stage-num" style="background:#74b9ff22;color:var(--blue);border:1.5px solid var(--blue)">1</div>
+        <h4>Parse</h4><span class="arrow">▶</span>
+      </div>
+      <div class="stage-body">
+        <div class="mini-flow">
+          <span class="f-in">Raw query string</span><span class="f-arrow">→</span>
+          <span class="f-proc">QueryParser.parse()</span><span class="f-arrow">→</span>
+          <span class="f-out">ParsedQuery</span>
+        </div>
+        <p>The parser first <strong>normalizes</strong> the text (Unicode NFC, case folding) via <code>TextNormalizer</code>, then <strong>tokenizes</strong> it using field-aware rules for identifiers, narrative text, and schema terms.</p>
+        <ul>
+          <li><strong>Period extraction</strong> — detects fiscal periods like <code>FY2024</code>, <code>Q3 2025</code>, <code>H1</code> using regex patterns</li>
+          <li><strong>Entity mentions</strong> — matches ticker patterns (<code>[A-Z]{1,5}</code>) and company name fragments</li>
+          <li><strong>Metric mentions</strong> — identifies financial metrics like "gross margin", "revenue", "EPS"</li>
+          <li><strong>Comparison detection</strong> — flags "vs", "compare", "versus" operators</li>
+          <li><strong>Negation detection</strong> — spots "not", "without", "excluding" modifiers</li>
+        </ul>
+        <p>Output: <code>ParsedQuery</code> with tokens, periods[], entity_mentions[], metric_mentions[], comparison_type, negation flag.</p>
+      </div>
+    </div>
+
+    <div class="stage-explainer" id="s-intent">
+      <div class="stage-header" onclick="toggleStage('s-intent')">
+        <div class="stage-num" style="background:#6c5ce722;color:var(--accent2);border:1.5px solid var(--accent2)">2</div>
+        <h4>Detect Intent</h4><span class="arrow">▶</span>
+      </div>
+      <div class="stage-body">
+        <div class="mini-flow">
+          <span class="f-in">ParsedQuery</span><span class="f-arrow">→</span>
+          <span class="f-proc">IntentDetector.detect()</span><span class="f-arrow">→</span>
+          <span class="f-out">IntentResult</span>
+        </div>
+        <p>Classifies the query into one of <strong>7 intents</strong>, each routing to a different retrieval tier:</p>
+        <ul>
+          <li><code>find_evidence</code> — factual lookup ("What is AAPL's revenue?") → <strong>Tier A</strong></li>
+          <li><code>compare</code> — multi-entity comparison ("AAPL vs MSFT margins") → <strong>Tier B</strong></li>
+          <li><code>summarize</code> — document summary ("Summarize GOOGL 10-K") → <strong>Tier B</strong></li>
+          <li><code>trend</code> — time-series analysis ("NVDA revenue trend") → <strong>Tier B</strong></li>
+          <li><code>screen</code> — multi-company screening ("Companies with >30% margin") → <strong>Tier B</strong></li>
+          <li><code>explain</code> — causal reasoning ("Why did NVDA decline?") → <strong>Tier C</strong></li>
+          <li><code>compute</code> — derived calculation ("Calculate AAPL ROIC") → <strong>Tier C</strong></li>
+        </ul>
+        <p>Each intent carries a <strong>confidence score</strong> and maps to one of three retrieval tiers (A = fast, B = precise, C = reasoning).</p>
+      </div>
+    </div>
+
+    <div class="stage-explainer" id="s-resolve">
+      <div class="stage-header" onclick="toggleStage('s-resolve')">
+        <div class="stage-num" style="background:#81ecec22;color:var(--cyan);border:1.5px solid var(--cyan)">3</div>
+        <h4>Resolve Entities</h4><span class="arrow">▶</span>
+      </div>
+      <div class="stage-body">
+        <div class="mini-flow">
+          <span class="f-in">Entity mentions</span><span class="f-arrow">→</span>
+          <span class="f-proc">EntityResolver.resolve_batch()</span><span class="f-arrow">→</span>
+          <span class="f-out">ResolutionResult</span>
+        </div>
+        <p>Each entity mention undergoes <strong>4-stage resolution</strong> to find its canonical company ID:</p>
+        <ul>
+          <li><strong>Stage 1 — Exact ticker match</strong>: Checks if "AAPL" maps directly to a known ticker</li>
+          <li><strong>Stage 2 — Exact lexicon match</strong>: Searches the full synonym lexicon for exact surface forms</li>
+          <li><strong>Stage 3 — Trigram ticker match</strong>: Fuzzy matching using trigram similarity (threshold ≥ 0.3) against tickers — catches "GOOG" → "GOOGL"</li>
+          <li><strong>Stage 4 — Trigram alias match</strong>: Fuzzy matching against all aliases — catches "Apple" → AAPL, "Microsoft" → MSFT</li>
+        </ul>
+        <p>Returns: canonical IDs, company IDs, metric IDs with confidence scores at each stage.</p>
+      </div>
+    </div>
+
+    <div class="stage-explainer" id="s-expand">
+      <div class="stage-header" onclick="toggleStage('s-expand')">
+        <div class="stage-num" style="background:#fdcb6e22;color:var(--orange);border:1.5px solid var(--orange)">4</div>
+        <h4>Expand Query</h4><span class="arrow">▶</span>
+      </div>
+      <div class="stage-body">
+        <div class="mini-flow">
+          <span class="f-in">Raw query + ResolutionResult</span><span class="f-arrow">→</span>
+          <span class="f-proc">QueryExpander.expand()</span><span class="f-arrow">→</span>
+          <span class="f-out">ExpandedQuery</span>
+        </div>
+        <p>The 7-step expansion pipeline enriches the query for maximum recall:</p>
+        <ul>
+          <li><strong>Step 1 — Tokenize</strong>: Re-tokenize normalized query</li>
+          <li><strong>Step 2 — Resolve entities</strong>: Inject canonical forms ("AAPL" → "Apple Inc.")</li>
+          <li><strong>Step 3 — Expand abbreviations</strong>: "FCF" → "Free Cash Flow", "EPS" → "Earnings Per Share"</li>
+          <li><strong>Step 4 — Phrase mining</strong>: Detect multi-word financial terms ("net operating income")</li>
+          <li><strong>Step 5 — Schema linking</strong>: Map to XBRL concepts ("net income" → <code>us-gaap:NetIncomeLoss</code>)</li>
+          <li><strong>Step 6 — Synonym injection</strong>: Add domain synonyms ("revenue" ↔ "top line" ↔ "net sales")</li>
+          <li><strong>Step 7 — Final assembly</strong>: Combine all expanded terms into retrieval-ready query</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="stage-explainer" id="s-plan">
+      <div class="stage-header" onclick="toggleStage('s-plan')">
+        <div class="stage-num" style="background:#00b89422;color:var(--green);border:1.5px solid var(--green)">5</div>
+        <h4>Generate Plan</h4><span class="arrow">▶</span>
+      </div>
+      <div class="stage-body">
+        <div class="mini-flow">
+          <span class="f-in">Parsed + Intent + Expansion</span><span class="f-arrow">→</span>
+          <span class="f-proc">QueryPlanner.plan()</span><span class="f-arrow">→</span>
+          <span class="f-out">QueryPlan</span>
+        </div>
+        <p>The planner builds an executable <code>QueryPlan</code> based on the detected tier:</p>
+        <ul>
+          <li><strong>Tier A (fast)</strong>: Lexical (BM25) + Semantic (ANN) + RRF fusion — no reranking, no graph</li>
+          <li><strong>Tier B (precision)</strong>: + Cross-encoder reranking of top-50 candidates</li>
+          <li><strong>Tier C (reasoning)</strong>: + Graph traversal for causal/relational context expansion</li>
+        </ul>
+        <p>Plan includes: <code>retrieval_text</code>, <code>company_ids</code>, <code>periods</code>, <code>doc_types</code>, and per-stage configs (top_k sizes, fusion method, reranker model).</p>
+      </div>
+    </div>
+
+    <div class="stage-explainer" id="s-retrieve">
+      <div class="stage-header" onclick="toggleStage('s-retrieve')">
+        <div class="stage-num" style="background:#fd79a822;color:var(--pink);border:1.5px solid var(--pink)">6</div>
+        <h4>Execute Retrieval</h4><span class="arrow">▶</span>
+      </div>
+      <div class="stage-body">
+        <div class="mini-flow">
+          <span class="f-in">ExpandedQuery + Plan</span><span class="f-arrow">→</span>
+          <span class="f-proc">HybridRetriever.retrieve()</span><span class="f-arrow">→</span>
+          <span class="f-out">RetrievalResult</span>
+        </div>
+        <p>The hybrid retrieval engine runs a <strong>5-stage sub-pipeline</strong>:</p>
+        <ul>
+          <li><strong>Lexical retrieval</strong> — BM25/FTS via Postgres <code>tsvector</code> + <code>ts_rank_cd</code> with section boosts (MD&A 1.3×, Risk Factors 1.2×)</li>
+          <li><strong>Semantic retrieval</strong> — Dual-channel dense ANN via Qdrant. Channel 1: narrative embedding (pure text). Channel 2: entity+schema conditioned embedding (prefixed with Company|Ticker|Sector|DocType|Section)</li>
+          <li><strong>Reciprocal Rank Fusion (RRF)</strong> — Combines all ranked lists: <code>RRF(d) = Σ 1/(k + rank_i(d))</code> with k=60. Deduplicates across channels</li>
+          <li><strong>Reranking</strong> (Tier B/C) — Cross-encoder reranking of top-50 fused candidates via Voyage/Cohere models</li>
+          <li><strong>Graph expansion</strong> (Tier C) — Traverse knowledge graph for related entities, causal facts, provenance chains</li>
+        </ul>
+        <p>Each hit gets a <code>ScoringBreakdown</code>: lexical_score, semantic_score, trigram_similarity, fused_score, rerank_score, recency_boost, entity_match_boost, final_score.</p>
+      </div>
+    </div>
+
+    <div class="stage-explainer" id="s-graph">
+      <div class="stage-header" onclick="toggleStage('s-graph')">
+        <div class="stage-num" style="background:#e1705522;color:var(--red);border:1.5px solid var(--red)">7</div>
+        <h4>Graph Expansion (Tier C)</h4><span class="arrow">▶</span>
+      </div>
+      <div class="stage-body">
+        <div class="mini-flow">
+          <span class="f-in">Resolved entity IDs</span><span class="f-arrow">→</span>
+          <span class="f-proc">GraphTraverser.expand_for_query()</span><span class="f-arrow">→</span>
+          <span class="f-out">GraphExpansionResult</span>
+        </div>
+        <p>Only activated for <strong>Tier C</strong> queries (explain, compute). Traverses the multi-zone knowledge graph:</p>
+        <ul>
+          <li>Walks from resolved entities through <strong>Entity → Knowledge → Data</strong> zones up to depth 2</li>
+          <li>Collects related entities (subsidiaries, competitors, executives)</li>
+          <li>Gathers facts (financial data points), claims (extracted statements), events (M&A, partnerships)</li>
+          <li>Follows provenance edges to source documents for auditability</li>
+          <li>Returns <code>GraphExpansionResult</code> with augmented context for answer generation</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="stage-explainer" id="s-explain">
+      <div class="stage-header" onclick="toggleStage('s-explain')">
+        <div class="stage-num" style="background:#a29bfe22;color:var(--accent2);border:1.5px solid var(--accent2)">8</div>
+        <h4>Explain Results</h4><span class="arrow">▶</span>
+      </div>
+      <div class="stage-body">
+        <div class="mini-flow">
+          <span class="f-in">RetrievalResult</span><span class="f-arrow">→</span>
+          <span class="f-proc">QueryExplainer.explain_result()</span><span class="f-arrow">→</span>
+          <span class="f-out">list[ExplainedHit]</span>
+        </div>
+        <p>Final stage annotates each retrieval hit with <strong>human-readable scoring explanations</strong>:</p>
+        <ul>
+          <li>Breaks down the <code>ScoringBreakdown</code> into natural language: <em>"Ranked #2 with lexical score 0.78 (matched 'revenue', 'margin' via BM25), semantic score 0.85, fused via RRF = 0.82, reranked to 0.91"</em></li>
+          <li>Highlights which terms matched (lexical), which embeddings were closest (semantic), and how fusion combined scores</li>
+          <li>Attaches provenance: source document, section, company, filing date</li>
+          <li>Enables full <strong>auditability</strong> — every score can be traced back to its origin</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ── INGESTION PIPELINE ── -->
+    <div class="section-title">Ingestion Pipeline — 8 Stages</div>
+    <p style="color:var(--text2);font-size:.88rem;margin-bottom:1rem">Documents (10-K/10-Q filings, transcripts, news) are processed through 8 stages before becoming queryable.</p>
+
+    <div class="stage-explainer" id="si1">
+      <div class="stage-header" onclick="toggleStage('si1')">
+        <div class="stage-num" style="background:#fdcb6e22;color:var(--orange);border:1.5px solid var(--orange)">1</div>
+        <h4>Parse Document</h4><span class="arrow">▶</span>
+      </div>
+      <div class="stage-body">
+        <div class="mini-flow">
+          <span class="f-in">Raw text + metadata</span><span class="f-arrow">→</span>
+          <span class="f-proc">create_parser(doc_type)</span><span class="f-arrow">→</span>
+          <span class="f-out">ParseResult(Document, sections)</span>
+        </div>
+        <p>Specialized parsers for each document type: SEC filings (10-K, 10-Q, 8-K), earnings transcripts, press releases, news articles. Extracts structural information like sections (Risk Factors, MD&A, Financial Statements), tables, and exhibits.</p>
+      </div>
+    </div>
+
+    <div class="stage-explainer" id="si2">
+      <div class="stage-header" onclick="toggleStage('si2')">
+        <div class="stage-num" style="background:#fdcb6e22;color:var(--orange);border:1.5px solid var(--orange)">2</div>
+        <h4>Validate</h4><span class="arrow">▶</span>
+      </div>
+      <div class="stage-body">
+        <div class="mini-flow">
+          <span class="f-in">Document</span><span class="f-arrow">→</span>
+          <span class="f-proc">DataValidator.validate_document()</span><span class="f-arrow">→</span>
+          <span class="f-out">ValidationResult</span>
+        </div>
+        <p>Sanity checks: required fields present, valid encoding, content length within bounds, no duplicate doc_ids, metadata consistency. Flags issues but allows ingestion to continue with warnings.</p>
+      </div>
+    </div>
+
+    <div class="stage-explainer" id="si3">
+      <div class="stage-header" onclick="toggleStage('si3')">
+        <div class="stage-num" style="background:#fdcb6e22;color:var(--orange);border:1.5px solid var(--orange)">3</div>
+        <h4>Chunk</h4><span class="arrow">▶</span>
+      </div>
+      <div class="stage-body">
+        <div class="mini-flow">
+          <span class="f-in">Document</span><span class="f-arrow">→</span>
+          <span class="f-proc">DocumentChunker.chunk_document()</span><span class="f-arrow">→</span>
+          <span class="f-out">list[Chunk]</span>
+        </div>
+        <p>Splits documents into retrieval-optimized chunks (default: 512 tokens, 64 overlap). Uses <strong>structural segmentation</strong> — detects section boundaries (headers, numbered items) and avoids splitting mid-sentence. Each chunk carries its section name, position offsets, and parent document reference.</p>
+      </div>
+    </div>
+
+    <div class="stage-explainer" id="si4">
+      <div class="stage-header" onclick="toggleStage('si4')">
+        <div class="stage-num" style="background:#fdcb6e22;color:var(--orange);border:1.5px solid var(--orange)">4</div>
+        <h4>Embed (Dual-Channel)</h4><span class="arrow">▶</span>
+      </div>
+      <div class="stage-body">
+        <div class="mini-flow">
+          <span class="f-in">list[Chunk]</span><span class="f-arrow">→</span>
+          <span class="f-proc">EmbeddingManager.embed_chunks()</span><span class="f-arrow">→</span>
+          <span class="f-out">list[DualEmbeddingResult]</span>
+        </div>
+        <p>Each chunk gets <strong>two separate embeddings</strong>:</p>
+        <ul>
+          <li><strong>Narrative embedding</strong> — pure text via <code>text-embedding-3-small</code> (1536 dims) for general semantic similarity</li>
+          <li><strong>Entity+Schema conditioned</strong> — text prefixed with <code>[Company|Ticker|Sector|DocType|Section]</code> via <code>text-embedding-3-large</code> (3072 dims) for entity-aware retrieval</li>
+        </ul>
+        <p>This dual strategy ensures "AAPL revenue" matches differently from "MSFT revenue" even when the text is similar.</p>
+      </div>
+    </div>
+
+    <div class="stage-explainer" id="si5">
+      <div class="stage-header" onclick="toggleStage('si5')">
+        <div class="stage-num" style="background:#fdcb6e22;color:var(--orange);border:1.5px solid var(--orange)">5</div>
+        <h4>Index Vectors</h4><span class="arrow">▶</span>
+      </div>
+      <div class="stage-body">
+        <div class="mini-flow">
+          <span class="f-in">Chunks + Embeddings</span><span class="f-arrow">→</span>
+          <span class="f-proc">VectorStore.upsert()</span><span class="f-arrow">→</span>
+          <span class="f-out">HNSW index in Qdrant</span>
+        </div>
+        <p>Stores embeddings into two Qdrant collections: <code>goat_narrative</code> and <code>goat_entity_schema</code>. Uses HNSW indexing (m=16, ef_construct=200) for fast ANN search. Payload indexes on company_id, sector, doc_type, year enable metadata-filtered search.</p>
+      </div>
+    </div>
+
+    <div class="stage-explainer" id="si6">
+      <div class="stage-header" onclick="toggleStage('si6')">
+        <div class="stage-num" style="background:#fdcb6e22;color:var(--orange);border:1.5px solid var(--orange)">6</div>
+        <h4>Index Full-Text (Postgres)</h4><span class="arrow">▶</span>
+      </div>
+      <div class="stage-body">
+        <div class="mini-flow">
+          <span class="f-in">Chunks + Document</span><span class="f-arrow">→</span>
+          <span class="f-proc">PostgresStore.fts_index()</span><span class="f-arrow">→</span>
+          <span class="f-out">tsvector + trigram index</span>
+        </div>
+        <p>Creates PostgreSQL full-text search entries with <code>tsvector</code> representations and GIN indexes for BM25 ranking. Also creates <code>pg_trgm</code> GIN indexes for trigram fuzzy matching — enabling misspelling tolerance and partial-match queries.</p>
+      </div>
+    </div>
+
+    <div class="stage-explainer" id="si7">
+      <div class="stage-header" onclick="toggleStage('si7')">
+        <div class="stage-num" style="background:#fdcb6e22;color:var(--orange);border:1.5px solid var(--orange)">7</div>
+        <h4>Build Graph</h4><span class="arrow">▶</span>
+      </div>
+      <div class="stage-body">
+        <div class="mini-flow">
+          <span class="f-in">ParseResult + Chunks + Companies</span><span class="f-arrow">→</span>
+          <span class="f-proc">GraphBuilder.build_*()</span><span class="f-arrow">→</span>
+          <span class="f-out">Nodes & edges in 5 zones</span>
+        </div>
+        <p>Populates the multi-zone knowledge graph: creates company nodes, links to sectors/exchanges, extracts financial facts as data nodes, creates claim/event nodes from parsed content, maps lexical entries to alias/synonym nodes, and records provenance chains from source documents.</p>
+      </div>
+    </div>
+
+    <div class="stage-explainer" id="si8">
+      <div class="stage-header" onclick="toggleStage('si8')">
+        <div class="stage-num" style="background:#fdcb6e22;color:var(--orange);border:1.5px solid var(--orange)">8</div>
+        <h4>Record Provenance</h4><span class="arrow">▶</span>
+      </div>
+      <div class="stage-body">
+        <div class="mini-flow">
+          <span class="f-in">All intermediate results</span><span class="f-arrow">→</span>
+          <span class="f-proc">ProvenanceRecord creation</span><span class="f-arrow">→</span>
+          <span class="f-out">W3C PROV triples in graph</span>
+        </div>
+        <p>Records full W3C PROV-DM provenance: which system version processed the document (<code>wasAttributedTo</code>), which extraction run generated chunks (<code>wasGeneratedBy</code>), which embedding model was used (<code>wasAssociatedWith</code>), and which source document each chunk derives from (<code>wasDerivedFrom</code>). Enables complete auditability and reproducibility.</p>
+      </div>
+    </div>
+
+    <!-- ── LEXICAL SUBSYSTEM ── -->
+    <div class="section-title">Lexical Semantics Subsystem</div>
+    <p style="color:var(--text2);font-size:.88rem;margin-bottom:1rem">A first-class processing layer ensuring "revenue", "top line", "net sales", and <code>us-gaap:Revenues</code> all resolve to the same canonical concept.</p>
+
+    <div class="stage-explainer" id="sl1">
+      <div class="stage-header" onclick="toggleStage('sl1')">
+        <div class="stage-num" style="background:#81ecec22;color:var(--cyan);border:1.5px solid var(--cyan)">⬡</div>
+        <h4>Normalize → Tokenize → Resolve → Link → Expand → Synonymize → Condition</h4><span class="arrow">▶</span>
+      </div>
+      <div class="stage-body">
+        <p>The 7-step lexical-semantic pipeline runs on <strong>every query and every ingested document</strong>:</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.5rem;margin:.8rem 0">
+          <div style="background:var(--surface2);padding:.6rem;border-radius:6px;border-left:3px solid var(--cyan)">
+            <strong style="font-size:.8rem">1. Normalize</strong><br>
+            <span style="font-size:.78rem;color:var(--text2)">Unicode NFC, case folding, accent removal, whitespace cleanup</span>
+          </div>
+          <div style="background:var(--surface2);padding:.6rem;border-radius:6px;border-left:3px solid var(--cyan)">
+            <strong style="font-size:.8rem">2. Tokenize</strong><br>
+            <span style="font-size:.78rem;color:var(--text2)">Field-aware: IDENTIFIER, NARRATIVE, SCHEMA, PERIOD, CURRENCY types</span>
+          </div>
+          <div style="background:var(--surface2);padding:.6rem;border-radius:6px;border-left:3px solid var(--cyan)">
+            <strong style="font-size:.8rem">3. Resolve</strong><br>
+            <span style="font-size:.78rem;color:var(--text2)">4-stage entity resolution with trigram similarity (≥0.3 threshold)</span>
+          </div>
+          <div style="background:var(--surface2);padding:.6rem;border-radius:6px;border-left:3px solid var(--cyan)">
+            <strong style="font-size:.8rem">4. Schema Link</strong><br>
+            <span style="font-size:.78rem;color:var(--text2)">Map to XBRL concepts (us-gaap:NetIncomeLoss, etc.)</span>
+          </div>
+          <div style="background:var(--surface2);padding:.6rem;border-radius:6px;border-left:3px solid var(--cyan)">
+            <strong style="font-size:.8rem">5. Abbreviations</strong><br>
+            <span style="font-size:.78rem;color:var(--text2)">FCF → Free Cash Flow, EPS → Earnings Per Share (46 entries)</span>
+          </div>
+          <div style="background:var(--surface2);padding:.6rem;border-radius:6px;border-left:3px solid var(--cyan)">
+            <strong style="font-size:.8rem">6. Synonyms</strong><br>
+            <span style="font-size:.78rem;color:var(--text2)">Revenue ↔ Top Line ↔ Net Sales via canonical ID lookup</span>
+          </div>
+          <div style="background:var(--surface2);padding:.6rem;border-radius:6px;border-left:3px solid var(--cyan)">
+            <strong style="font-size:.8rem">7. Condition</strong><br>
+            <span style="font-size:.78rem;color:var(--text2)">Prepend entity context for conditioned embeddings</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RETRIEVAL TIERS ── -->
+    <div class="section-title">Retrieval Tier Architecture</div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1rem">
+      <div class="result-card" style="border-top:3px solid var(--green)">
+        <h3 style="color:var(--green)">Tier A — Fast</h3>
+        <p style="font-size:.85rem;color:var(--text2);line-height:1.5;margin-top:.5rem">
+          <strong>Lexical</strong> (BM25/FTS) +<br>
+          <strong>Semantic</strong> (dual ANN) +<br>
+          <strong>RRF Fusion</strong><br><br>
+          No reranking, no graph.<br>Used for simple factual lookups.
+        </p>
+      </div>
+      <div class="result-card" style="border-top:3px solid var(--orange)">
+        <h3 style="color:var(--orange)">Tier B — Precision</h3>
+        <p style="font-size:.85rem;color:var(--text2);line-height:1.5;margin-top:.5rem">
+          Everything in Tier A +<br>
+          <strong>Cross-encoder reranking</strong><br>
+          of top-50 candidates<br><br>
+          Used for comparisons, trends, summaries.
+        </p>
+      </div>
+      <div class="result-card" style="border-top:3px solid var(--red)">
+        <h3 style="color:var(--red)">Tier C — Reasoning</h3>
+        <p style="font-size:.85rem;color:var(--text2);line-height:1.5;margin-top:.5rem">
+          Everything in Tier B +<br>
+          <strong>Graph traversal</strong><br>
+          (depth-2 expansion across zones)<br><br>
+          Used for causal/relational queries.
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════ GRAPH TAB ═══════════════════ -->
+  <div id="graph" class="panel">
+    <div class="graph-controls">
+      <button class="graph-btn active" data-zone="all">All Zones</button>
+      <button class="graph-btn" data-zone="entity">Entity</button>
+      <button class="graph-btn" data-zone="data">Data</button>
+      <button class="graph-btn" data-zone="knowledge">Knowledge</button>
+      <button class="graph-btn" data-zone="lexical">Lexical</button>
+      <button class="graph-btn" data-zone="provenance">Provenance</button>
+    </div>
+    <div class="graph-container">
+      <canvas class="graph-canvas" id="graphCanvas"></canvas>
+      <div class="graph-legend" id="graphLegend"></div>
+    </div>
+    <div style="margin-top:1rem">
+      <div class="section-title" style="margin-top:1rem">Zone Details</div>
+      <div id="zoneDetail"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════ ARCHITECTURE TAB ═══════════════════ -->
+  <div id="arch" class="panel">
+    <div class="section-title">System Architecture</div>
+
+    <div class="arch-diagram">
+      <div class="arch-row">
+        <div class="arch-box query">Query Pipeline<br><small>8 stages</small></div>
+        <div class="arch-box ingest">Ingestion Pipeline<br><small>8 stages</small></div>
+      </div>
+      <div class="arch-connector">▼ ▼</div>
+      <div class="arch-row">
+        <div class="arch-box lexical">Lexical Semantics<br><small>7-step NLP</small></div>
+      </div>
+      <div class="arch-connector">▼</div>
+      <div class="arch-row">
+        <div class="arch-box retrieval">Hybrid Retrieval<br><small>5-stage</small></div>
+        <div class="arch-box embed">Dual Embeddings<br><small>narrative + entity</small></div>
+        <div class="arch-box graph">Graph RAG<br><small>5 zones</small></div>
+      </div>
+      <div class="arch-connector">▼ ▼ ▼</div>
+      <div class="arch-row">
+        <div class="arch-box storage">PostgreSQL<br><small>FTS + trigram</small></div>
+        <div class="arch-box storage">Qdrant<br><small>HNSW vectors</small></div>
+        <div class="arch-box storage">NetworkX<br><small>multi-zone graph</small></div>
+        <div class="arch-box storage">DuckDB<br><small>analytics</small></div>
+      </div>
+    </div>
+
+    <div class="section-title">Module Breakdown</div>
+    <div class="module-grid">
+      <div class="module-card">
+        <h4><span class="dot" style="background:var(--accent2)"></span>Query Pipeline</h4>
+        <p>8-stage orchestrator: Parse → Intent → Resolve → Expand → Plan → Retrieve → Graph → Explain. Routes queries through tiered retrieval based on complexity.</p>
+        <div class="files">parser.py · intent.py · planner.py · explainer.py · pipeline.py</div>
+      </div>
+      <div class="module-card">
+        <h4><span class="dot" style="background:var(--orange)"></span>Ingestion Pipeline</h4>
+        <p>8-stage document processor: Parse → Validate → Chunk → Embed → Index Vectors → Index FTS → Build Graph → Record Provenance. Handles SEC filings, transcripts, news.</p>
+        <div class="files">parsers.py · loader.py · validator.py · edgar.py · pipeline.py</div>
+      </div>
+      <div class="module-card">
+        <h4><span class="dot" style="background:var(--cyan)"></span>Lexical Semantics</h4>
+        <p>First-class NLP subsystem: Unicode normalization, field-aware tokenization, 4-stage entity resolution, XBRL schema linking, synonym expansion. Ensures "revenue" = "top line" = "net sales".</p>
+        <div class="files">normalizer.py · tokenizer.py · entity_resolver.py · schema_linker.py · query_expander.py · synonym_manager.py</div>
+      </div>
+      <div class="module-card">
+        <h4><span class="dot" style="background:var(--blue)"></span>Hybrid Retrieval</h4>
+        <p>5-stage retrieval: Lexical (BM25) + Semantic (dual ANN) + RRF Fusion + Reranking + Graph Expansion. Three tiers: A (fast), B (precision), C (reasoning).</p>
+        <div class="files">lexical.py · semantic.py · fusion.py · reranker.py · hybrid.py</div>
+      </div>
+      <div class="module-card">
+        <h4><span class="dot" style="background:var(--red)"></span>Dual Embeddings</h4>
+        <p>Two embeddings per chunk: narrative (text-embedding-3-small, 1536d) for general similarity, entity+schema conditioned (text-embedding-3-large, 3072d) for entity-aware retrieval.</p>
+        <div class="files">models.py · manager.py · chunker.py</div>
+      </div>
+      <div class="module-card">
+        <h4><span class="dot" style="background:var(--pink)"></span>Graph RAG</h4>
+        <p>5-zone knowledge graph (Entity, Data, Knowledge, Lexical, Provenance). NetworkX MultiDiGraph backend. Community detection via Louvain. Depth-2 traversal for Tier C queries.</p>
+        <div class="files">zones.py · builder.py · traversal.py · community.py</div>
+      </div>
+      <div class="module-card">
+        <h4><span class="dot" style="background:var(--green)"></span>Storage Layer</h4>
+        <p>Four backends: PostgreSQL (FTS + trigram + canonical data), Qdrant (HNSW vector search), NetworkX (multi-zone graph), DuckDB (analytics + evaluation).</p>
+        <div class="files">postgres.py · vector_store.py · graph_store.py · duckdb_store.py</div>
+      </div>
+      <div class="module-card">
+        <h4><span class="dot" style="background:var(--text2)"></span>Operations & Reporting</h4>
+        <p>Version tracking, latency/quality monitoring, Precision@k/NDCG evaluation harness. Terminal, JSON, and CSV exporters for results.</p>
+        <div class="files">versioning.py · monitoring.py · evaluation.py · terminal.py · json_export.py · csv_export.py</div>
+      </div>
+    </div>
+
+    <div class="section-title">Data Models</div>
+    <div class="module-grid">
+      <div class="module-card">
+        <h4><span class="dot" style="background:var(--cyan)"></span>Company</h4>
+        <p>canonical_id, name, identifiers[] (ticker/ISIN/CIK/LEI), aliases[], metadata (sector, industry, market_cap), financials (income/balance/cashflow), management[], tags[]</p>
+      </div>
+      <div class="module-card">
+        <h4><span class="dot" style="background:var(--blue)"></span>Document & Chunk</h4>
+        <p><strong>Document:</strong> doc_id, title, content, metadata (company, doc_type, filing_date). <strong>Chunk:</strong> chunk_id, text, offsets, section, company context, dual embedding IDs, provenance.</p>
+      </div>
+      <div class="module-card">
+        <h4><span class="dot" style="background:var(--green)"></span>Financials</h4>
+        <p><strong>Income:</strong> revenue, COGS, gross/operating/net margins. <strong>Balance:</strong> assets, liabilities, equity, ratios. <strong>Cash Flow:</strong> OCF, capex, FCF, buybacks.</p>
+      </div>
+      <div class="module-card">
+        <h4><span class="dot" style="background:var(--orange)"></span>Retrieval & Scoring</h4>
+        <p><strong>RetrievalResult:</strong> hits[], tier, fusion_method, latencies. <strong>ScoringBreakdown:</strong> lexical/semantic/trigram/fused/rerank/final scores per hit.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ── Tab switching ── */
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById(t.dataset.tab).classList.add('active');
+    if(t.dataset.tab==='graph')drawGraph(currentZone);
+  });
+});
+
+/* ── Stage accordion ── */
+function toggleStage(id){
+  const el=document.getElementById(id);
+  const body=el.querySelector('.stage-body');
+  const arrow=el.querySelector('.arrow');
+  const open=body.classList.toggle('open');
+  arrow.classList.toggle('open',open);
+}
+
+/* ── Sample queries ── */
+const samples=[
+  "What drives AAPL margin expansion?",
+  "Compare AAPL vs MSFT gross margins Q3 2025",
+  "Why did NVDA revenue decline in FY2024?",
+  "Summarize GOOGL latest 10-K highlights",
+  "AMZN free cash flow trend 2020-2024"
+];
+const samplesEl=document.getElementById('samples');
+samples.forEach(s=>{
+  const btn=document.createElement('button');
+  btn.className='sample';btn.textContent=s;
+  btn.onclick=()=>{document.getElementById('qInput').value=s;runQuery()};
+  samplesEl.appendChild(btn);
+});
+
+/* ── Query execution ── */
+const stageNames=['parse','intent','resolve','expand','plan','retrieve','graph','explain'];
+const stageColors=['#74b9ff','#6c5ce7','#81ecec','#fdcb6e','#00b894','#fd79a8','#e17055','#a29bfe'];
+
+async function runQuery(){
+  const q=document.getElementById('qInput').value.trim();
+  if(!q)return;
+  document.getElementById('emptyQuery').style.display='none';
+  document.getElementById('stagePipeline').style.display='flex';
+  document.getElementById('results').style.display='grid';
+
+  // animate stages
+  const pipeEl=document.getElementById('stagePipeline');
+  pipeEl.innerHTML='';
+  stageNames.forEach((name,i)=>{
+    if(i>0){const a=document.createElement('div');a.className='stage-arrow';pipeEl.appendChild(a)}
+    const node=document.createElement('div');node.className='stage-node';
+    node.innerHTML=`<div class="stage-dot" id="sd-${name}">${i+1}</div><div class="stage-label">${name}</div>`;
+    pipeEl.appendChild(node);
+  });
+
+  // animate sequential stage highlighting
+  for(let i=0;i<stageNames.length;i++){
+    await sleep(80);
+    document.getElementById('sd-'+stageNames[i]).classList.add('hit');
+    if(i>0){pipeEl.querySelectorAll('.stage-arrow')[i-1].classList.add('hit')}
+  }
+
+  try{
+    const res=await fetch('/api/query?q='+encodeURIComponent(q));
+    const data=await res.json();
+    if(data.error){showError(data.error);return}
+
+    // Update stage dots for actual results
+    stageNames.forEach(name=>{
+      const dot=document.getElementById('sd-'+name);
+      if(data.stages&&!data.stages[name]){dot.classList.remove('hit');dot.classList.add('skip')}
+    });
+
+    const r=document.getElementById('results');
+    r.innerHTML=`
+      <div class="result-card">
+        <h3>Intent & Tier</h3>
+        <div style="display:flex;gap:.5rem;align-items:center;margin-bottom:.8rem">
+          <span class="badge intent">${data.intent}</span>
+          <span class="badge tier-${data.tier?.toLowerCase()}">${data.tier}</span>
+          <span style="color:var(--text2);font-size:.8rem;margin-left:auto">${data.confidence} confidence</span>
+        </div>
+        <div class="kv"><span class="k">Time</span><span class="v">${data.time_ms}ms</span></div>
+        <div class="kv"><span class="k">Tokens</span><span class="v">${data.tokens?.length||0}</span></div>
+        <div class="kv"><span class="k">Entities</span><span class="v">${data.entities?.length||0}</span></div>
+        <div class="kv"><span class="k">Periods</span><span class="v">${data.periods?.length||0}</span></div>
+      </div>
+      <div class="result-card">
+        <h3>Extracted Elements</h3>
+        ${data.tokens?.length?'<div style="margin-bottom:.6rem"><span style="font-size:.75rem;color:var(--text2)">TOKENS</span><div class="token-list">'+data.tokens.map(t=>`<span class="token">${esc(t)}</span>`).join('')+'</div></div>':''}
+        ${data.entities?.length?'<div style="margin-bottom:.6rem"><span style="font-size:.75rem;color:var(--text2)">ENTITIES</span><div class="token-list">'+data.entities.map(e=>`<span class="token entity">${esc(e)}</span>`).join('')+'</div></div>':''}
+        ${data.periods?.length?'<div style="margin-bottom:.6rem"><span style="font-size:.75rem;color:var(--text2)">PERIODS</span><div class="token-list">'+data.periods.map(p=>`<span class="token period">${esc(p)}</span>`).join('')+'</div></div>':''}
+        ${data.metrics?.length?'<div><span style="font-size:.75rem;color:var(--text2)">METRICS</span><div class="token-list">'+data.metrics.map(m=>`<span class="token metric">${esc(m)}</span>`).join('')+'</div></div>':''}
+      </div>
+    `;
+  }catch(e){showError(e.message)}
+}
+
+function showError(msg){
+  document.getElementById('results').innerHTML=`<div class="result-card" style="grid-column:span 2;border-color:var(--red)"><h3 style="color:var(--red)">Error</h3><p>${esc(msg)}</p></div>`;
+}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+
+document.getElementById('qBtn').addEventListener('click',runQuery);
+document.getElementById('qInput').addEventListener('keydown',e=>{if(e.key==='Enter')runQuery()});
+
+/* ═══════════════════════════════════════════════════
+   GRAPH VISUALIZATION — Canvas-based force-directed
+   ═══════════════════════════════════════════════════ */
+
+const ZONES={
+  entity:{
+    color:'#81ecec',label:'Entity Zone',
+    nodes:[
+      {id:'AAPL',type:'company',label:'Apple Inc.',r:22},
+      {id:'MSFT',type:'company',label:'Microsoft',r:22},
+      {id:'NVDA',type:'company',label:'NVIDIA',r:22},
+      {id:'GOOGL',type:'company',label:'Alphabet',r:22},
+      {id:'AMZN',type:'company',label:'Amazon',r:22},
+      {id:'TK_AAPL',type:'ticker',label:'AAPL',r:14},
+      {id:'TK_MSFT',type:'ticker',label:'MSFT',r:14},
+      {id:'TK_NVDA',type:'ticker',label:'NVDA',r:14},
+      {id:'TK_GOOGL',type:'ticker',label:'GOOGL',r:14},
+      {id:'TK_AMZN',type:'ticker',label:'AMZN',r:14},
+      {id:'S_TECH',type:'sector',label:'Technology',r:18},
+      {id:'I_CE',type:'industry',label:'Consumer Electronics',r:14},
+      {id:'I_SW',type:'industry',label:'Software',r:14},
+      {id:'I_SEMI',type:'industry',label:'Semiconductors',r:14},
+      {id:'I_INET',type:'industry',label:'Internet Services',r:14},
+      {id:'I_ECOM',type:'industry',label:'E-Commerce',r:14},
+      {id:'EX_NASDAQ',type:'exchange',label:'NASDAQ',r:16},
+      {id:'EXEC_TC',type:'executive',label:'Tim Cook',r:12},
+      {id:'EXEC_SN',type:'executive',label:'Satya Nadella',r:12},
+      {id:'EXEC_JH',type:'executive',label:'Jensen Huang',r:12},
+    ],
+    edges:[
+      {s:'AAPL',t:'TK_AAPL',label:'has_ticker'},
+      {s:'MSFT',t:'TK_MSFT',label:'has_ticker'},
+      {s:'NVDA',t:'TK_NVDA',label:'has_ticker'},
+      {s:'GOOGL',t:'TK_GOOGL',label:'has_ticker'},
+      {s:'AMZN',t:'TK_AMZN',label:'has_ticker'},
+      {s:'AAPL',t:'S_TECH',label:'belongs_to_sector'},
+      {s:'MSFT',t:'S_TECH',label:'belongs_to_sector'},
+      {s:'NVDA',t:'S_TECH',label:'belongs_to_sector'},
+      {s:'GOOGL',t:'S_TECH',label:'belongs_to_sector'},
+      {s:'AMZN',t:'S_TECH',label:'belongs_to_sector'},
+      {s:'AAPL',t:'I_CE',label:'belongs_to_industry'},
+      {s:'MSFT',t:'I_SW',label:'belongs_to_industry'},
+      {s:'NVDA',t:'I_SEMI',label:'belongs_to_industry'},
+      {s:'GOOGL',t:'I_INET',label:'belongs_to_industry'},
+      {s:'AMZN',t:'I_ECOM',label:'belongs_to_industry'},
+      {s:'AAPL',t:'EX_NASDAQ',label:'listed_on'},
+      {s:'MSFT',t:'EX_NASDAQ',label:'listed_on'},
+      {s:'NVDA',t:'EX_NASDAQ',label:'listed_on'},
+      {s:'GOOGL',t:'EX_NASDAQ',label:'listed_on'},
+      {s:'AMZN',t:'EX_NASDAQ',label:'listed_on'},
+      {s:'AAPL',t:'MSFT',label:'competes_with'},
+      {s:'NVDA',t:'AAPL',label:'competes_with'},
+      {s:'EXEC_TC',t:'AAPL',label:'employed_by'},
+      {s:'EXEC_SN',t:'MSFT',label:'employed_by'},
+      {s:'EXEC_JH',t:'NVDA',label:'employed_by'},
+    ]
+  },
+  data:{
+    color:'#00b894',label:'Data Zone',
+    nodes:[
+      {id:'AAPL',type:'company',label:'Apple Inc.',r:22},
+      {id:'MSFT',type:'company',label:'Microsoft',r:22},
+      {id:'NVDA',type:'company',label:'NVIDIA',r:22},
+      {id:'F_AAPL_REV',type:'fact',label:'AAPL Revenue\n$383B',r:16},
+      {id:'F_AAPL_NI',type:'fact',label:'AAPL Net Income\n$97B',r:16},
+      {id:'F_AAPL_GM',type:'ratio',label:'AAPL Gross Margin\n45.9%',r:14},
+      {id:'F_MSFT_REV',type:'fact',label:'MSFT Revenue\n$245B',r:16},
+      {id:'F_MSFT_NI',type:'fact',label:'MSFT Net Income\n$88B',r:16},
+      {id:'F_MSFT_GM',type:'ratio',label:'MSFT Gross Margin\n69.4%',r:14},
+      {id:'F_NVDA_REV',type:'fact',label:'NVDA Revenue\n$60B',r:16},
+      {id:'F_NVDA_GM',type:'ratio',label:'NVDA Gross Margin\n72.7%',r:14},
+      {id:'G_AAPL',type:'guidance',label:'AAPL FY2025\nGuidance',r:13},
+      {id:'P_FY2024',type:'period',label:'FY2024',r:12},
+      {id:'P_FY2023',type:'period',label:'FY2023',r:12},
+    ],
+    edges:[
+      {s:'AAPL',t:'F_AAPL_REV',label:'has_fact'},
+      {s:'AAPL',t:'F_AAPL_NI',label:'has_fact'},
+      {s:'AAPL',t:'F_AAPL_GM',label:'has_ratio'},
+      {s:'MSFT',t:'F_MSFT_REV',label:'has_fact'},
+      {s:'MSFT',t:'F_MSFT_NI',label:'has_fact'},
+      {s:'MSFT',t:'F_MSFT_GM',label:'has_ratio'},
+      {s:'NVDA',t:'F_NVDA_REV',label:'has_fact'},
+      {s:'NVDA',t:'F_NVDA_GM',label:'has_ratio'},
+      {s:'AAPL',t:'G_AAPL',label:'gave_guidance'},
+      {s:'F_AAPL_REV',t:'P_FY2024',label:'fact_for_period'},
+      {s:'F_MSFT_REV',t:'P_FY2024',label:'fact_for_period'},
+      {s:'F_NVDA_REV',t:'P_FY2024',label:'fact_for_period'},
+      {s:'F_AAPL_NI',t:'P_FY2023',label:'fact_for_period'},
+    ]
+  },
+  knowledge:{
+    color:'#fd79a8',label:'Knowledge Zone',
+    nodes:[
+      {id:'AAPL',type:'company',label:'Apple Inc.',r:22},
+      {id:'NVDA',type:'company',label:'NVIDIA',r:22},
+      {id:'CL1',type:'claim',label:'App Store drives\necosystem lock-in',r:16},
+      {id:'CL2',type:'claim',label:'AI chip demand\ndriving growth',r:16},
+      {id:'CL3',type:'claim',label:'Services margin\nexpanding',r:16},
+      {id:'EV1',type:'event',label:'Apple acquired\nBeats (2014)',r:15},
+      {id:'EV2',type:'event',label:'NVDA Blackwell\nlaunch (2024)',r:15},
+      {id:'R1',type:'risk',label:'iPhone market\nsaturation',r:14},
+      {id:'R2',type:'risk',label:'AI regulation\nuncertainty',r:14},
+      {id:'AO1',type:'analyst',label:'Upgrade AAPL\nto Overweight',r:13},
+    ],
+    edges:[
+      {s:'CL1',t:'AAPL',label:'mentioned_in'},
+      {s:'CL2',t:'NVDA',label:'mentioned_in'},
+      {s:'CL3',t:'AAPL',label:'mentioned_in'},
+      {s:'AAPL',t:'EV1',label:'acquired'},
+      {s:'NVDA',t:'EV2',label:'launched'},
+      {s:'R1',t:'AAPL',label:'impacts'},
+      {s:'R2',t:'NVDA',label:'impacts'},
+      {s:'AO1',t:'AAPL',label:'rates'},
+      {s:'CL1',t:'CL3',label:'supports'},
+      {s:'CL2',t:'EV2',label:'caused_by'},
+    ]
+  },
+  lexical:{
+    color:'#81ecec',label:'Lexical Zone',
+    nodes:[
+      {id:'LX_REV',type:'canonical',label:'Revenue\n(canonical)',r:20},
+      {id:'LX_NI',type:'canonical',label:'Net Income\n(canonical)',r:20},
+      {id:'LX_FCF',type:'canonical',label:'Free Cash Flow\n(canonical)',r:20},
+      {id:'SYN_TL',type:'synonym',label:'Top Line',r:13},
+      {id:'SYN_NS',type:'synonym',label:'Net Sales',r:13},
+      {id:'SYN_PL',type:'synonym',label:'Profit/Loss',r:13},
+      {id:'SYN_AE',type:'synonym',label:'Attributable\nEarnings',r:13},
+      {id:'ABB_FCF',type:'abbreviation',label:'FCF',r:11},
+      {id:'ABB_EPS',type:'abbreviation',label:'EPS',r:11},
+      {id:'ABB_EBITDA',type:'abbreviation',label:'EBITDA',r:11},
+      {id:'SCH_REV',type:'schema',label:'us-gaap:\nRevenues',r:14},
+      {id:'SCH_NI',type:'schema',label:'us-gaap:\nNetIncomeLoss',r:14},
+      {id:'AL_AAPL',type:'alias',label:'Apple Inc.',r:12},
+      {id:'AL_AAPL2',type:'alias',label:'Apple',r:11},
+      {id:'TK_AAPL',type:'ticker_alias',label:'AAPL',r:11},
+    ],
+    edges:[
+      {s:'SYN_TL',t:'LX_REV',label:'synonym_of'},
+      {s:'SYN_NS',t:'LX_REV',label:'synonym_of'},
+      {s:'SYN_PL',t:'LX_NI',label:'synonym_of'},
+      {s:'SYN_AE',t:'LX_NI',label:'synonym_of'},
+      {s:'ABB_FCF',t:'LX_FCF',label:'abbreviates'},
+      {s:'LX_REV',t:'SCH_REV',label:'maps_to_concept'},
+      {s:'LX_NI',t:'SCH_NI',label:'maps_to_concept'},
+      {s:'AL_AAPL',t:'TK_AAPL',label:'alias_of'},
+      {s:'AL_AAPL2',t:'TK_AAPL',label:'alias_of'},
+    ]
+  },
+  provenance:{
+    color:'#a29bfe',label:'Provenance Zone',
+    nodes:[
+      {id:'DOC1',type:'document',label:'AAPL 10-K\n2024',r:18},
+      {id:'DOC2',type:'document',label:'MSFT 10-K\n2024',r:18},
+      {id:'DOC3',type:'document',label:'NVDA Transcript\nQ4 2024',r:18},
+      {id:'CHK1',type:'chunk',label:'Chunk #42\n(Revenue section)',r:14},
+      {id:'CHK2',type:'chunk',label:'Chunk #108\n(Risk Factors)',r:14},
+      {id:'EXR1',type:'extraction',label:'ExtractionRun\n2024-01-15',r:14},
+      {id:'EMR1',type:'embedding',label:'EmbeddingRun\nv3-small',r:14},
+      {id:'MDL1',type:'model',label:'text-embedding\n-3-small',r:13},
+      {id:'SYS1',type:'system',label:'GOAT v0.1.2',r:15},
+      {id:'SRC1',type:'source',label:'SEC EDGAR',r:13},
+    ],
+    edges:[
+      {s:'CHK1',t:'DOC1',label:'wasDerivedFrom'},
+      {s:'CHK2',t:'DOC1',label:'wasDerivedFrom'},
+      {s:'CHK1',t:'EXR1',label:'wasGeneratedBy'},
+      {s:'CHK2',t:'EXR1',label:'wasGeneratedBy'},
+      {s:'EXR1',t:'DOC1',label:'used'},
+      {s:'EMR1',t:'CHK1',label:'used'},
+      {s:'EMR1',t:'MDL1',label:'wasAssociatedWith'},
+      {s:'DOC1',t:'SYS1',label:'wasAttributedTo'},
+      {s:'DOC2',t:'SYS1',label:'wasAttributedTo'},
+      {s:'DOC3',t:'SYS1',label:'wasAttributedTo'},
+      {s:'DOC1',t:'SRC1',label:'derivedFrom'},
+      {s:'DOC2',t:'SRC1',label:'derivedFrom'},
+    ]
+  }
+};
+
+const nodeTypeColors={
+  company:'#6c5ce7',ticker:'#74b9ff',sector:'#fdcb6e',industry:'#fdcb6e',
+  exchange:'#e17055',executive:'#fd79a8',
+  fact:'#00b894',ratio:'#00cec9',guidance:'#ffeaa7',period:'#dfe6e9',
+  claim:'#fd79a8',event:'#e17055',risk:'#d63031',analyst:'#a29bfe',
+  canonical:'#81ecec',synonym:'#74b9ff',abbreviation:'#fdcb6e',schema:'#00b894',
+  alias:'#dfe6e9',ticker_alias:'#74b9ff',
+  document:'#a29bfe',chunk:'#74b9ff',extraction:'#00b894',embedding:'#fdcb6e',
+  model:'#fd79a8',system:'#6c5ce7',source:'#e17055'
+};
+
+let currentZone='all';
+let graphNodes=[];let graphEdges=[];
+let animFrame=null;
+let canvas,ctx;
+let cW=900,cH=560; /* CSS-pixel drawing dimensions */
+let dragNode=null,dragOff={x:0,y:0};
+let mouse={x:0,y:0,down:false};
+let hoverNode=null;
+
+function initGraph(){
+  canvas=document.getElementById('graphCanvas');
+  ctx=canvas.getContext('2d');
+  canvas.addEventListener('mousedown',onMouseDown);
+  canvas.addEventListener('mousemove',onMouseMove);
+  canvas.addEventListener('mouseup',onMouseUp);
+  canvas.addEventListener('mouseleave',onMouseUp);
+  window.addEventListener('resize',()=>{if(document.getElementById('graph').classList.contains('active')){resizeCanvas();render()}});
+
+  document.querySelectorAll('.graph-btn').forEach(b=>{
+    b.addEventListener('click',()=>{
+      document.querySelectorAll('.graph-btn').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      currentZone=b.dataset.zone;
+      drawGraph(currentZone);
+    });
+  });
+}
+
+function resizeCanvas(){
+  const dpr=window.devicePixelRatio||1;
+  const rect=canvas.parentElement.getBoundingClientRect();
+  cW=rect.width||900;
+  cH=560;
+  canvas.width=cW*dpr;
+  canvas.height=cH*dpr;
+  canvas.style.width=cW+'px';
+  canvas.style.height=cH+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+
+function buildGraphData(zone){
+  graphNodes=[];graphEdges=[];
+  const seen=new Set();
+  const zones=zone==='all'?Object.keys(ZONES):[zone];
+  const pad=60;
+
+  zones.forEach((z,zi)=>{
+    const zd=ZONES[z];if(!zd)return;
+    /* spread zone centers in a circle or centered for single zone */
+    const angle=(2*Math.PI*zi)/zones.length - Math.PI/2;
+    const cx=cW/2+Math.cos(angle)*(zones.length>1?cW*0.22:0);
+    const cy=cH/2+Math.sin(angle)*(zones.length>1?cH*0.22:0);
+
+    zd.nodes.forEach((n,ni)=>{
+      const key=z+'_'+n.id;
+      if(seen.has(n.id)&&zone==='all')return;
+      seen.add(n.id);
+      const a=(2*Math.PI*ni)/zd.nodes.length;
+      const spread=Math.min(cW,cH)*0.28*(zone==='all'?0.45:0.7);
+      graphNodes.push({
+        ...n,
+        _id:key,
+        zone:z,
+        x:cx+Math.cos(a)*spread*(0.5+Math.random()*0.5),
+        y:cy+Math.sin(a)*spread*(0.5+Math.random()*0.5),
+        vx:0,vy:0,
+        color:nodeTypeColors[n.type]||'#888'
+      });
+    });
+    zd.edges.forEach(e=>{
+      const sNode=graphNodes.find(n=>n.id===e.s && (n.zone===z || zone==='all'));
+      const tNode=graphNodes.find(n=>n.id===e.t && (n.zone===z || zone==='all'));
+      if(sNode&&tNode)graphEdges.push({source:sNode,target:tNode,label:e.label,zone:z});
+    });
+  });
+}
+
+function simulate(){
+  const dt=0.4;
+  const pad=20;
+  /* repulsion */
+  for(let i=0;i<graphNodes.length;i++){
+    for(let j=i+1;j<graphNodes.length;j++){
+      let dx=graphNodes[j].x-graphNodes[i].x;
+      let dy=graphNodes[j].y-graphNodes[i].y;
+      let d=Math.sqrt(dx*dx+dy*dy)||1;
+      let f=1200/(d*d);
+      graphNodes[i].vx-=dx/d*f*dt;
+      graphNodes[i].vy-=dy/d*f*dt;
+      graphNodes[j].vx+=dx/d*f*dt;
+      graphNodes[j].vy+=dy/d*f*dt;
+    }
+  }
+  /* attraction along edges */
+  graphEdges.forEach(e=>{
+    let dx=e.target.x-e.source.x;
+    let dy=e.target.y-e.source.y;
+    let d=Math.sqrt(dx*dx+dy*dy)||1;
+    let f=(d-100)*0.012;
+    e.source.vx+=dx/d*f*dt;
+    e.source.vy+=dy/d*f*dt;
+    e.target.vx-=dx/d*f*dt;
+    e.target.vy-=dy/d*f*dt;
+  });
+  /* gravity toward center */
+  graphNodes.forEach(n=>{
+    n.vx+=(cW/2-n.x)*0.002;
+    n.vy+=(cH/2-n.y)*0.002;
+    n.vx*=0.82;n.vy*=0.82;
+    if(n!==dragNode){n.x+=n.vx;n.y+=n.vy}
+    n.x=Math.max(n.r+pad,Math.min(cW-n.r-pad,n.x));
+    n.y=Math.max(n.r+pad,Math.min(cH-n.r-pad,n.y));
+  });
+}
+
+function render(){
+  ctx.clearRect(0,0,cW,cH);
+
+  /* zone labels */
+  if(currentZone==='all'){
+    Object.keys(ZONES).forEach(z=>{
+      const zNodes=graphNodes.filter(n=>n.zone===z);
+      if(!zNodes.length)return;
+      let cx=0,cy=0;
+      zNodes.forEach(n=>{cx+=n.x;cy+=n.y});
+      cx/=zNodes.length;cy/=zNodes.length;
+      ctx.fillStyle=ZONES[z].color+'22';
+      ctx.font='bold 12px sans-serif';
+      ctx.textAlign='center';
+      ctx.fillText(ZONES[z].label.toUpperCase(),cx,cy-70);
+    });
+  }
+
+  /* edges */
+  graphEdges.forEach(e=>{
+    const zColor=ZONES[e.zone]?.color||'#666';
+    ctx.beginPath();
+    ctx.moveTo(e.source.x,e.source.y);
+    ctx.lineTo(e.target.x,e.target.y);
+    ctx.strokeStyle=zColor+'55';
+    ctx.lineWidth=1.2;
+    ctx.stroke();
+
+    /* arrowhead */
+    const dx=e.target.x-e.source.x,dy=e.target.y-e.source.y;
+    const d=Math.sqrt(dx*dx+dy*dy)||1;
+    const ax=e.target.x-dx/d*(e.target.r+5);
+    const ay=e.target.y-dy/d*(e.target.r+5);
+    const ang=Math.atan2(dy,dx);
+    ctx.beginPath();
+    ctx.moveTo(ax,ay);
+    ctx.lineTo(ax-7*Math.cos(ang-.35),ay-7*Math.sin(ang-.35));
+    ctx.lineTo(ax-7*Math.cos(ang+.35),ay-7*Math.sin(ang+.35));
+    ctx.closePath();
+    ctx.fillStyle=zColor+'88';
+    ctx.fill();
+
+    /* edge label for single-zone view */
+    if(currentZone!=='all'){
+      const mx=(e.source.x+e.target.x)/2;
+      const my=(e.source.y+e.target.y)/2;
+      ctx.fillStyle='#ffffff55';
+      ctx.font='8px monospace';
+      ctx.textAlign='center';
+      ctx.fillText(e.label,mx,my-5);
+    }
+  });
+
+  /* nodes */
+  graphNodes.forEach(n=>{
+    const isHover=n===hoverNode;
+    const r=n.r*(isHover?1.15:1);
+
+    /* outer glow */
+    const grad=ctx.createRadialGradient(n.x,n.y,r*0.5,n.x,n.y,r+8);
+    grad.addColorStop(0,n.color+'30');
+    grad.addColorStop(1,n.color+'00');
+    ctx.beginPath();
+    ctx.arc(n.x,n.y,r+8,0,Math.PI*2);
+    ctx.fillStyle=grad;
+    ctx.fill();
+
+    /* filled circle */
+    ctx.beginPath();
+    ctx.arc(n.x,n.y,r,0,Math.PI*2);
+    ctx.fillStyle=n.color+(isHover?'55':'28');
+    ctx.strokeStyle=n.color+(isHover?'ff':'bb');
+    ctx.lineWidth=isHover?2.5:1.5;
+    ctx.fill();ctx.stroke();
+
+    /* label */
+    ctx.fillStyle=isHover?'#ffffff':'#e0e0ee';
+    const fontSize=Math.max(8,Math.min(11,r*0.55));
+    ctx.font=`${r>16?'bold ':''}${fontSize}px sans-serif`;
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    const lines=n.label.split('\n');
+    lines.forEach((line,i)=>{
+      const ly=n.y+(i-(lines.length-1)/2)*(fontSize+2);
+      ctx.fillText(line,n.x,ly);
+    });
+  });
+
+  /* hover tooltip */
+  if(hoverNode){
+    const n=hoverNode;
+    const txt=`${n.type} | ${n.zone} zone`;
+    ctx.font='bold 10px sans-serif';
+    const tw=ctx.measureText(txt).width+16;
+    const tx=Math.min(n.x-tw/2,cW-tw-8);
+    const ty=n.y-n.r-22;
+    ctx.fillStyle='#1a1a26ee';
+    ctx.strokeStyle=n.color+'66';
+    ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.roundRect(tx,ty,tw,18,4);
+    ctx.fill();ctx.stroke();
+    ctx.fillStyle='#e0e0ee';
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillText(txt,tx+tw/2,ty+9);
+  }
+}
+
+function drawGraph(zone){
+  if(animFrame)cancelAnimationFrame(animFrame);
+  resizeCanvas();
+  buildGraphData(zone);
+  updateLegend(zone);
+  updateZoneDetail(zone);
+
+  let ticks=0;
+  function loop(){
+    if(ticks<300)simulate();
+    render();
+    ticks++;
+    animFrame=requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+function updateLegend(zone){
+  const legend=document.getElementById('graphLegend');
+  const types=new Map();
+  graphNodes.forEach(n=>{if(!types.has(n.type))types.set(n.type,n.color)});
+  legend.innerHTML='<div style="font-size:.7rem;font-weight:700;margin-bottom:.4rem;color:var(--text2)">NODE TYPES</div>'+
+    [...types].map(([t,c])=>`<div class="legend-item"><div class="legend-dot" style="background:${c}"></div>${t}</div>`).join('');
+}
+
+function updateZoneDetail(zone){
+  const el=document.getElementById('zoneDetail');
+  if(zone==='all'){
+    el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.8rem">
+      ${Object.entries(ZONES).map(([k,v])=>`
+        <div class="result-card" style="border-left:3px solid ${v.color}">
+          <h3 style="color:${v.color}">${v.label}</h3>
+          <p style="font-size:.82rem;color:var(--text2);margin-top:.4rem">${v.nodes.length} nodes · ${v.edges.length} edges</p>
+        </div>`).join('')}
+    </div>`;
+    return;
+  }
+  const z=ZONES[zone];if(!z)return;
+  const typeCounts={};
+  z.nodes.forEach(n=>{typeCounts[n.type]=(typeCounts[n.type]||0)+1});
+  el.innerHTML=`<div class="result-card" style="border-left:3px solid ${z.color}">
+    <h3 style="color:${z.color}">${z.label}</h3>
+    <div style="margin-top:.6rem">
+      ${Object.entries(typeCounts).map(([t,c])=>`<div class="kv"><span class="k">${t}</span><span class="v">${c}</span></div>`).join('')}
+      <div class="kv"><span class="k">edges</span><span class="v">${z.edges.length}</span></div>
+    </div>
+  </div>`;
+}
+
+function getNodeAt(x,y){
+  for(let i=graphNodes.length-1;i>=0;i--){
+    const n=graphNodes[i];
+    const dx=n.x-x,dy=n.y-y;
+    if(dx*dx+dy*dy<=n.r*n.r)return n;
+  }
+  return null;
+}
+function onMouseDown(e){
+  const rect=canvas.getBoundingClientRect();
+  const x=e.clientX-rect.left,y=e.clientY-rect.top;
+  mouse.down=true;
+  const n=getNodeAt(x,y);
+  if(n){dragNode=n;dragOff.x=n.x-x;dragOff.y=n.y-y;}
+}
+function onMouseMove(e){
+  const rect=canvas.getBoundingClientRect();
+  mouse.x=e.clientX-rect.left;mouse.y=e.clientY-rect.top;
+  if(dragNode){dragNode.x=mouse.x+dragOff.x;dragNode.y=mouse.y+dragOff.y}
+  hoverNode=getNodeAt(mouse.x,mouse.y);
+  canvas.style.cursor=hoverNode?'grab':'default';
+}
+function onMouseUp(){mouse.down=false;dragNode=null}
+
+initGraph();
+
+/* ── Zone descriptions in How It Works ── */
+</script>
+</body>
+</html>
